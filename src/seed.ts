@@ -85,7 +85,7 @@ export async function seedIfEmpty(fresh = isFreshDb()): Promise<void> {
       await db.templates.add({ code: t.code, name: t.name, rows });
     }
 
-    const s = { ...DEFAULT_SETTINGS, createdAt: Date.now(), ...(fresh ? { startDate: todayISO(), freshAccount: true } : {}) };
+    const s = { ...DEFAULT_SETTINGS, createdAt: Date.now(), startDate: todayISO(), ...(fresh ? { freshAccount: true } : {}) };
     await db.settings.bulkPut(Object.entries(s).map(([key, value]) => ({ key, value })));
     await db.settings.put({ key: 'seeded', value: true });
   });

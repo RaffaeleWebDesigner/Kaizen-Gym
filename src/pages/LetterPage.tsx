@@ -6,7 +6,7 @@ import { setSetting, useSettings, type Letter } from '../lib/settings';
 import { fmtDateFull, toISO } from '../lib/dates';
 
 const PROMPTS = [
-  'Perché ho iniziato, il 16 novembre?',
+  'Perché ho iniziato?',
   'Cosa voglio poter fare tra un anno?',
   'Cosa mi dico nei giorni in cui non ho voglia?',
 ];
