@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Card, Header } from '../components/ui';
 import { useSettings } from '../lib/settings';
+import { APP_VERSION, feedbackMailto } from '../lib/feedback';
 
 const ITEMS = [
   { to: '/account', icon: '🔄', title: 'Account e sincronizzazione', text: 'Stessi progressi su telefono e computer' },
@@ -20,11 +21,20 @@ const ITEMS = [
 export default function MorePage() {
   const s = useSettings();
   if (!s) return null;
+  const installed = !!window.matchMedia?.('(display-mode: standalone)').matches;
   const items = ITEMS.filter((i) => i.to !== '/rank' || s.rankEnabled).map((i) => (i.to === '/calcio' && s.sportEnabled ? { ...i, title: `${s.sportName} e pianificazione` } : i));
   return (
     <div className="pb-nav">
       <Header title="Altro" />
       <div className="p-4 space-y-2">
+        <Card className="border-accent/40">
+          <p className="font-semibold mb-1">Stai provando la beta</p>
+          <p className="text-sm text-muted mb-3">Qualcosa non va o ti manca qualcosa? Scrivimelo: si apre un’email già pronta.</p>
+          <div className="grid grid-cols-2 gap-2">
+            <a href={feedbackMailto('problema', { installed })} className="min-h-[48px] grid place-items-center text-center px-2 rounded-xl bg-accent text-black font-semibold text-sm">🐞 Un problema</a>
+            <a href={feedbackMailto('idea', { installed })} className="min-h-[48px] grid place-items-center text-center px-2 rounded-xl border border-line bg-surface2 font-semibold text-sm">💡 Un’idea</a>
+          </div>
+        </Card>
         {items.map((i) => (
           <Link key={i.to} to={i.to} className="block">
             <Card className="flex items-center gap-3 p-4">
@@ -42,6 +52,7 @@ export default function MorePage() {
           <p className="text-sm text-muted"><b className="text-ink">Kaizen decide quanto:</b> +1 ripetizione o il carico più piccolo possibile, sempre 2-3 ripetizioni di margine, 30-45 minuti.</p>
           <p className="text-sm text-muted mt-1"><b className="text-ink">Presentarsi decide se:</b> si va sempre. Nei giorni no c’è la seduta minima, e conta.</p>
         </Card>
+        <p className="text-xs text-muted text-center pt-2">Kaizen-Gym {APP_VERSION}</p>
       </div>
     </div>
   );

@@ -5,8 +5,11 @@ import { VitePWA } from 'vite-plugin-pwa';
 // BASE: "/" per Netlify o sviluppo locale, "/Kaizen/" per GitHub Pages (impostato dal workflow).
 const base = process.env.BASE ?? '/';
 
+const stamp = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
 export default defineConfig({
   base,
+  define: { __APP_VERSION__: JSON.stringify(`${process.env.npm_package_version ?? '1.0.0'} (${stamp})`) },
   plugins: [
     react(),
     VitePWA({

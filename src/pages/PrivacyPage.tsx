@@ -1,10 +1,9 @@
 import type { ReactNode } from 'react';
 import { Card, Header } from '../components/ui';
 import { MIN_AGE, PRIVACY_VERSION } from '../lib/privacy';
+import { CONTACT_EMAIL as CONTACT, OWNER } from '../lib/contact';
 
 // BOZZA da far controllare a un professionista prima di aprire l'app al pubblico.
-const OWNER = 'Raffaele Ciccarelli';
-const CONTACT = 'raffo.cicca@gmail.com';
 
 function S({ title, children }: { title: string; children: ReactNode }) {
   return (
