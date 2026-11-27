@@ -3,6 +3,7 @@
 #   SUPABASE_DB_URL     stringa di connessione "Session pooler" di Supabase (con la password del database)
 #   BACKUP_PASSPHRASE   una frase lunga a piacere: il file viene cifrato con questa
 # La copia cifrata resta tra gli "artifact" del workflow per 60 giorni.
+# Se il repo è pubblico il backup viene saltato: gli artifact di un repo pubblico li può scaricare chiunque.
 name: Backup database
 
 on:
@@ -19,8 +20,12 @@ jobs:
         env:
           DB: ${{ secrets.SUPABASE_DB_URL }}
           PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ -z "$DB" ] || [ -z "$PASS" ]; then
+          if [ "$(gh api "repos/${{ github.repository }}" --jq .private)" != "true" ]; then
+            echo "::notice::Backup saltato: il repo è pubblico e gli artifact sarebbero scaricabili da tutti"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          elif [ -z "$DB" ] || [ -z "$PASS" ]; then
             echo "::notice::Backup saltato: mancano i secret SUPABASE_DB_URL e/o BACKUP_PASSPHRASE"
             echo "ok=false" >> "$GITHUB_OUTPUT"
           else
