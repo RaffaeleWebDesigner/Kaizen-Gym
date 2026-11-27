@@ -58,7 +58,9 @@ export function suggestTarget(row: RowLike, ex: ExLike, exerciseId: number, hist
       reps: row.repMin,
       load: row.startLoad,
       kind: 'first',
-      message: 'Prima volta: parti dal minimo della fascia e tieni 2-3 ripetizioni di margine.',
+      message: row.startLoad === 0 && !ex.bodyweight && ex.type === 'reps'
+        ? `Prima volta: scegli un peso con cui arrivi a ${row.repMin} ripetizioni lasciandone 2-3 di margine. Meglio leggero che troppo pesante.`
+        : 'Prima volta: parti dal minimo della fascia e tieni 2-3 ripetizioni di margine.',
     };
   }
 

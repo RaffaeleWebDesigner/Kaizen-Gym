@@ -64,9 +64,9 @@ export async function exportPhotosZip(): Promise<Blob | null> {
 export async function importPhotosZip(buf: ArrayBuffer): Promise<{ added: number; skipped: number }> {
   const files = unzipSync(new Uint8Array(buf));
   const idx = files['indice.json'];
-  if (!idx) throw new Error('Lo ZIP non contiene indice.json: non sembra un backup delle foto di Metodo Kaizen.');
+  if (!idx) throw new Error('Lo ZIP non contiene indice.json: non sembra un backup delle foto di Kaizen-Gym.');
   const parsed = JSON.parse(strFromU8(idx));
-  if (parsed?.app !== 'metodo-kaizen-foto') throw new Error('Lo ZIP non è un backup delle foto di Metodo Kaizen.');
+  if (parsed?.app !== 'metodo-kaizen-foto') throw new Error('Lo ZIP non è un backup delle foto di Kaizen-Gym.');
   const existing = await db.photos.toArray();
   let added = 0;
   let skipped = 0;

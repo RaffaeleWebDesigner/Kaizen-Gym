@@ -59,7 +59,7 @@ export default function SettingsPage() {
           ))}
           <Button variant="ghost" className="w-full" onClick={() => setSetting('rankThresholds', DEFAULT_THRESHOLDS)}>Ripristina le soglie iniziali</Button>
         </Card>
-        <p className="text-xs text-muted text-center">Metodo Kaizen · i dati restano su questo dispositivo</p>
+        <p className="text-xs text-muted text-center">Kaizen-Gym · i dati restano su questo dispositivo</p>
       </div>
     </div>
   );

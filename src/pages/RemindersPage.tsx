@@ -87,7 +87,7 @@ export default function RemindersPage() {
             <li>Se non si apre: su un computer vai su calendar.google.com → Impostazioni → Importa ed esporta → scegli il file.</li>
           </ol>
           <p className="font-semibold text-sm">Se cambi giorni o orario</p>
-          <p className="text-sm text-muted">Prima elimina l’evento "Palestra – Metodo Kaizen" dal calendario (scegli "tutti gli eventi futuri"), poi rigenera e reimporta il file, così non hai doppioni.</p>
+          <p className="text-sm text-muted">Prima elimina l’evento "Palestra – Kaizen-Gym" dal calendario (scegli "tutti gli eventi futuri"), poi rigenera e reimporta il file, così non hai doppioni.</p>
         </Card>
       </div>
     </div>

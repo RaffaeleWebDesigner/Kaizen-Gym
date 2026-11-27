@@ -1,5 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type RankKey } from '../db';
+import type { Profile } from './onboarding';
 
 export interface PlateInv {
   weight: number; // kg
@@ -60,11 +61,14 @@ export interface AppSettings {
   letterShownOn: string | null;
   rankThresholds: Thresholds;
   notices: Notice[];
+  // Kaizen-Gym: percorso di benvenuto
+  onboarded: boolean;
+  profile: Profile | null;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   startDate: '2026-11-16',
-  heightCm: 172,
+  heightCm: 170,
   weeklyGoal: 3,
   trainingWeekday: 2,
   lbPerBlock: 15,
@@ -95,6 +99,8 @@ export const DEFAULT_SETTINGS: AppSettings = {
   letterShownOn: null,
   rankThresholds: DEFAULT_THRESHOLDS,
   notices: [],
+  onboarded: false,
+  profile: null,
 };
 
 export async function getSettings(): Promise<AppSettings> {

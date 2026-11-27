@@ -156,7 +156,7 @@ export async function ensureV3(): Promise<void> {
     const done = (await db.sessions.toArray()).filter((s) => s.status === 'done').sort((a, b) => a.date.localeCompare(b.date));
     const first = done[0];
     if (first) {
-      await addOnce({ date: first.date, title: 'Prima seduta del progetto', description: 'Il primo passo del Metodo Kaizen.', category: 'palestra', source: 'manual', autoKey: 'starter:first-session', claim: { type: 'seduta', date: first.date } });
+      await addOnce({ date: first.date, title: 'Prima seduta del progetto', description: 'Il primo passo di Kaizen-Gym.', category: 'palestra', source: 'manual', autoKey: 'starter:first-session', claim: { type: 'seduta', date: first.date } });
     }
     const sick = (await db.dayMarks.where('type').equals('sick').toArray()).map((m) => m.date).sort();
     if (sick.length) {

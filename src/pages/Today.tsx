@@ -38,6 +38,7 @@ export default function Today() {
   }, []);
 
   if (!data || !photos || !attempts || !challenges || successCount === undefined) return null;
+  if (!data.settings.onboarded) return <Navigate to="/benvenuto" replace />;
   if (!data.settings.letterPrompted) return <Navigate to="/lettera?primo=1" replace />;
   const today = todayISO();
   const { sessions, marks, matches, settings } = data;
@@ -90,7 +91,7 @@ export default function Today() {
       <header className="px-4 pt-safe">
         <div className="pt-5 pb-2 flex items-end justify-between">
           <div>
-            <div className="text-xs uppercase tracking-[0.2em] text-accent font-bold">Metodo Kaizen</div>
+            <div className="text-xs uppercase tracking-[0.2em] text-accent font-bold">Kaizen-Gym</div>
             <h1 className="text-2xl font-bold capitalize">{fmtDateLong(today)}</h1>
           </div>
         </div>

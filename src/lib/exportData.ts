@@ -15,7 +15,7 @@ export async function exportAll(): Promise<string> {
 
 export async function importAll(json: string): Promise<void> {
   const parsed = JSON.parse(json);
-  if (parsed?.app !== 'metodo-kaizen' || !parsed.data) throw new Error('Il file non sembra un backup di Metodo Kaizen.');
+  if (parsed?.app !== 'metodo-kaizen' || !parsed.data) throw new Error('Il file non sembra un backup di Kaizen-Gym.');
   await db.transaction('rw', TABLES.map((t) => (db as any)[t]), async () => {
     for (const t of TABLES) {
       await (db as any)[t].clear();
