@@ -9,7 +9,19 @@ import { syncDerived } from './lib/derived';
 import { startSync } from './sync';
 import { syncConsentMirror } from './lib/privacy';
 
-registerSW({ immediate: true });
+// Su iPhone l'app installata riprende dallo sfondo senza ricaricarsi: senza questo
+// controllo resterebbe sulla versione vecchia anche dopo un aggiornamento.
+registerSW({
+  immediate: true,
+  onRegisteredSW(_url, reg) {
+    if (!reg) return;
+    const check = () => reg.update().catch(() => undefined);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') check();
+    });
+    setInterval(check, 60 * 60 * 1000);
+  },
+});
 
 seedIfEmpty()
   .then(() => ensureV2())
