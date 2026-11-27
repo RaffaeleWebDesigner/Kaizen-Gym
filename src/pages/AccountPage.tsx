@@ -49,7 +49,7 @@ function LoginForm() {
   return (
     <Card>
       <h2 className="font-bold mb-1">{mode === 'in' ? 'Accedi' : 'Crea un account'}</h2>
-      <p className="text-sm text-muted mb-3">Con lo stesso account su iPhone e PC vedi gli stessi progressi. Ogni account ha i suoi dati.</p>
+      <p className="text-sm text-muted mb-3">Con lo stesso account su telefono e computer vedi gli stessi progressi. Ogni account ha i suoi dati.</p>
       <form onSubmit={submit} className="space-y-2">
         <input className={input} type="email" autoComplete="email" inputMode="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <input className={input} type="password" autoComplete={mode === 'in' ? 'current-password' : 'new-password'} placeholder="Password (almeno 6 caratteri)" value={pw} onChange={(e) => setPw(e.target.value)} required minLength={6} />

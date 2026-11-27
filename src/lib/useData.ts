@@ -13,7 +13,9 @@ export function useData() {
       db.templates.toArray(),
     ]);
     sessions.sort((a, b) => b.date.localeCompare(a.date) || (b.endedAt ?? Infinity) - (a.endedAt ?? Infinity));
-    return { sessions, marks, matches, settings, exercises, templates, exById: new Map(exercises.map((e) => [e.id!, e])) };
+    const sportOn = settings.sportEnabled;
+    if (!sportOn) settings.trainingWeekday = -1;
+    return { sessions, marks, matches: sportOn ? matches : [], settings, exercises, templates, exById: new Map(exercises.map((e) => [e.id!, e])) };
   }, []);
 }
 

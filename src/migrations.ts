@@ -30,7 +30,7 @@ const BUILTIN_CHALLENGES = [
   },
   {
     name: 'Settimana perfetta',
-    description: '3 sedute su 3 più tutti gli impegni di calcio, senza nessuna seduta saltata.',
+    description: 'Tutte le sedute previste della settimana, senza nessuna seduta saltata.',
     duration: 'week' as const,
   },
 ];
@@ -96,13 +96,13 @@ export async function ensureV2(): Promise<void> {
 
 export const V3_CHALLENGES: Omit<Challenge, 'id' | 'builtin'>[] = [
   {
-    name: 'Il nemico n.1',
-    description: 'Per una settimana, nei giorni di palestra niente videogiochi finché la seduta non è fatta. Prima il bilanciere, poi la console.',
+    name: 'Prima la seduta',
+    description: 'Per una settimana, nei giorni di palestra niente serie, giochi o social finché la seduta non è fatta. Prima i pesi, poi il divano.',
     duration: 'week',
   },
   {
     name: 'Ritorno immediato',
-    description: 'Il giorno dopo una seduta saltata fai almeno la seduta minima. Non si lasciano due giorni di fila al nemico.',
+    description: 'Il giorno dopo una seduta saltata fai almeno la seduta minima. Non si lasciano due giorni di fila alla pigrizia.',
     duration: 'day',
   },
   {
@@ -122,7 +122,7 @@ export const V3_CHALLENGES: Omit<Challenge, 'id' | 'builtin'>[] = [
   },
   {
     name: 'Due settimane perfette',
-    description: 'Due Settimane perfette di fila: tutte le sedute previste e tutti gli impegni di calcio, nessuna seduta saltata. Disponibile dopo 12 settimane di progetto.',
+    description: 'Due Settimane perfette di fila: tutte le sedute previste, nessuna seduta saltata. Disponibile dopo 12 settimane di progetto.',
     duration: 'week',
     spanWeeks: 2,
     minWeeks: 12,

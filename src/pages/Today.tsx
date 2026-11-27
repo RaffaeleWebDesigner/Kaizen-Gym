@@ -134,7 +134,7 @@ export default function Today() {
           )}
         </Card>
 
-        <div className="grid grid-cols-2 gap-3">
+        <div className={`grid gap-3 ${settings.rankEnabled ? 'grid-cols-2' : 'grid-cols-1'}`}>
           <Link to="/successi">
             <Card className="h-full">
               <div className="text-xs uppercase tracking-wide text-muted">Barattolo dei successi</div>
@@ -142,7 +142,7 @@ export default function Today() {
               <div className="text-xs text-muted">aprilo nei momenti di calo</div>
             </Card>
           </Link>
-          <Link to="/rank">
+          {settings.rankEnabled && <Link to="/rank">
             <Card className="h-full flex items-center gap-2">
               {rank?.overall ? <RankBadge level={rank.overall} size={44} /> : <span className="text-3xl">◇</span>}
               <div className="min-w-0">
@@ -150,7 +150,7 @@ export default function Today() {
                 <div className="font-bold leading-tight">{rank?.overall ? levelName(rank.overall) : 'ancora nessuno'}</div>
               </div>
             </Card>
-          </Link>
+          </Link>}
         </div>
 
         <div className="grid grid-cols-2 gap-3">
@@ -212,7 +212,7 @@ export default function Today() {
           </Link>
         )}
 
-        {suggested.length > 0 && cur && cur.done < cur.target && (
+        {settings.sportEnabled && suggested.length > 0 && cur && cur.done < cur.target && (
           <Link to="/calcio" className="block">
             <Card>
               <div className="text-xs uppercase tracking-wide text-muted mb-2">Giorni consigliati per la palestra</div>
@@ -251,7 +251,7 @@ export default function Today() {
             </Card>
           </Link>
         ) : (
-          <Link to="/sfide" className="block"><Card><div className="font-semibold">Sfide sbloccate</div><div className="text-sm text-muted">Programmane una, nei giorni compatibili con il calcio.</div></Card></Link>
+          <Link to="/sfide" className="block"><Card><div className="font-semibold">Sfide sbloccate</div><div className="text-sm text-muted">Programmane una in un giorno adatto.</div></Card></Link>
         )}
         {settings.gymDays.length === 0 && (
           <Link to="/promemoria" className="block">

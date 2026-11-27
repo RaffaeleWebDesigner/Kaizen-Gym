@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Button, Card, Field, Header, NumInput, Stepper, inputCls } from '../components/ui';
-import { DEFAULT_THRESHOLDS, setSetting, useSettings } from '../lib/settings';
+import { Button, Card, Chips, Field, Header, NumInput, Stepper, Toggle, inputCls } from '../components/ui';
+import { DEFAULT_THRESHOLDS, DEFAULT_THRESHOLDS_F, setSetting, useSettings } from '../lib/settings';
 import { LB_TO_KG, fmtNum } from '../lib/units';
 import { RANK_EXERCISE_LABEL } from '../lib/rank';
 import type { RankKey } from '../db';
@@ -37,7 +37,19 @@ export default function SettingsPage() {
           </Field>
         </Card>
         <Card>
-          <h2 className="font-bold mb-1">Soglie dei rank</h2>
+          <h2 className="font-bold mb-1">Rank</h2>
+          <Toggle label="Mostra il rank (livello di forza)" checked={s.rankEnabled} onChange={(v) => setSetting('rankEnabled', v)} />
+          {s.rankEnabled && (
+            <div className="mb-3">
+              <div className="text-sm mb-1">Soglie pensate per</div>
+              <Chips options={[{ value: 'm', label: 'Uomo' }, { value: 'f', label: 'Donna' }]} value={s.sex} onChange={async (v) => {
+                await setSetting('sex', v as 'm' | 'f');
+                await setSetting('rankThresholds', v === 'f' ? DEFAULT_THRESHOLDS_F : DEFAULT_THRESHOLDS);
+              }} />
+            </div>
+          )}
+          {s.rankEnabled && <>
+          <h3 className="font-semibold mb-1">Soglie</h3>
           <p className="text-xs text-muted mb-3">Indice di forza = massimale stimato / peso corporeo. {TH_LABELS.join(' / ')}.</p>
           {(Object.keys(RANK_EXERCISE_LABEL) as RankKey[]).map((k) => (
             <div key={k} className="mb-3">
@@ -57,7 +69,8 @@ export default function SettingsPage() {
               </div>
             </div>
           ))}
-          <Button variant="ghost" className="w-full" onClick={() => setSetting('rankThresholds', DEFAULT_THRESHOLDS)}>Ripristina le soglie iniziali</Button>
+          <Button variant="ghost" className="w-full" onClick={() => setSetting('rankThresholds', s.sex === 'f' ? DEFAULT_THRESHOLDS_F : DEFAULT_THRESHOLDS)}>Ripristina le soglie iniziali</Button>
+          </>}
         </Card>
         <p className="text-xs text-muted text-center">Kaizen-Gym · i dati restano su questo dispositivo</p>
       </div>

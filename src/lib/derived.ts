@@ -189,7 +189,9 @@ async function doSync(): Promise<void> {
 
   // rank: storico, promozioni e retrocessioni
   const today = todayISO();
-  const { ranks, overall, bw } = computeRanks(sessions, exById, measures, settings.rankThresholds, today);
+  const { ranks, overall, bw } = settings.rankEnabled
+    ? computeRanks(sessions, exById, measures, settings.rankThresholds, today)
+    : { ranks: [] as ReturnType<typeof computeRanks>['ranks'], overall: null, bw: null };
   const history = await db.rankHistory.toArray();
   const lastOf = (key: string) => history.filter((h) => h.key === key).sort((a, b) => a.date.localeCompare(b.date) || a.id! - b.id!).pop();
   const notices = [...settings.notices];

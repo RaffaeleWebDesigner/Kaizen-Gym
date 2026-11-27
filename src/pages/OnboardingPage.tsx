@@ -1,7 +1,7 @@
 import { useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button, Card, toast } from '../components/ui';
-import { setSetting } from '../lib/settings';
+import { DEFAULT_THRESHOLDS, DEFAULT_THRESHOLDS_F, setSetting } from '../lib/settings';
 import {
   ALL_EQUIP, EQUIP_LABEL, EXPERIENCE_LABEL, GOAL_LABEL, MACHINE_STEPS, PLACE_LABEL, PROGRAM_LABEL, SAFETY_QUESTIONS,
   applyOnboarding, buildPlan, equipmentFor, suggestedProgram,
@@ -10,7 +10,7 @@ import {
 import type { Unit } from '../db';
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
-type Step = 'benvenuto' | 'obiettivo' | 'esperienza' | 'dove' | 'attrezzatura' | 'unita' | 'giorni' | 'sicurezza' | 'riepilogo';
+type Step = 'benvenuto' | 'obiettivo' | 'esperienza' | 'rank' | 'dove' | 'attrezzatura' | 'unita' | 'giorni' | 'sicurezza' | 'riepilogo';
 
 function Choice({ selected, title, text, onClick }: { selected: boolean; title: string; text?: string; onClick: () => void }) {
   return (
@@ -48,10 +48,11 @@ export default function OnboardingPage() {
   const [safety, setSafety] = useState<Record<string, boolean | undefined>>({});
   const [accepted, setAccepted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [rank, setRank] = useState<'m' | 'f' | 'off' | null>(null);
 
   const usesMachines = place !== null && equipmentFor({ place, equipment }).some((e) => e === 'cavi' || e === 'macchine');
   const steps: Step[] = useMemo(() => {
-    const s: Step[] = ['benvenuto', 'obiettivo', 'esperienza', 'dove'];
+    const s: Step[] = ['benvenuto', 'obiettivo', 'esperienza', 'rank', 'dove'];
     if (place === 'casa') s.push('attrezzatura');
     s.push('unita', 'giorni', 'sicurezza', 'riepilogo');
     return s;
@@ -68,6 +69,11 @@ export default function OnboardingPage() {
     if (!goal || !experience || !place) return;
     setSaving(true);
     try {
+      await setSetting('rankEnabled', rank !== 'off');
+      if (rank === 'm' || rank === 'f') {
+        await setSetting('sex', rank);
+        await setSetting('rankThresholds', rank === 'f' ? DEFAULT_THRESHOLDS_F : DEFAULT_THRESHOLDS);
+      }
       await applyOnboarding({ goal, experience, place, equipment, unit, machineStep, days, program: prog, gymDays, safetyFlags: flags, acceptedAt: Date.now() });
       nav('/lettera?primo=1', { replace: true });
     } catch {
@@ -112,6 +118,16 @@ export default function OnboardingPage() {
         </Q>
       );
       canNext = !!experience;
+      break;
+    case 'rank':
+      body = (
+        <Q title="Vuoi vedere il tuo livello di forza?" hint="Il rank confronta i tuoi carichi con il peso corporeo, con soglie diverse per uomini e donne. Si può spegnere quando vuoi.">
+          <Choice selected={rank === 'm'} title="Sì, soglie da uomo" onClick={() => setRank('m')} />
+          <Choice selected={rank === 'f'} title="Sì, soglie da donna" onClick={() => setRank('f')} />
+          <Choice selected={rank === 'off'} title="No, grazie" text="Niente rank e niente promozioni" onClick={() => setRank('off')} />
+        </Q>
+      );
+      canNext = !!rank;
       break;
     case 'dove':
       body = (

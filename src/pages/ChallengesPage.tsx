@@ -40,7 +40,7 @@ export default function ChallengesPage() {
       <div className="p-4 space-y-3">
         <UnlockCard u={u} />
         <Card className="text-sm text-muted">
-          Dure ma sicure: tecnica pulita, niente cedimento, ci si ferma col dolore. Massimo una ogni 3-4 settimane, mai nelle 48 ore prima di una partita né il giorno dopo.
+          Dure ma sicure: tecnica pulita, niente cedimento, ci si ferma col dolore. Massimo una ogni 3-4 settimane{data.settings.sportEnabled ? ', mai nelle 48 ore prima di una partita né il giorno dopo' : ''}.
         </Card>
 
         {planned.length > 0 && <h2 className="font-bold pt-1">In programma</h2>}
@@ -181,7 +181,7 @@ function CreateSheet({ onClose }: { onClose: () => void }) {
         toast('Sfida creata');
         onClose();
       }}>Crea sfida</Button>
-      <p className="text-xs text-muted mt-2">Le date si scelgono solo tra quelle compatibili con il calcio, come per le altre.</p>
+      <p className="text-xs text-muted mt-2">Le date proposte evitano i giorni già occupati, come per le altre.</p>
     </Sheet>
   );
 }

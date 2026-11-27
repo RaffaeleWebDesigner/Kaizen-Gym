@@ -1,5 +1,5 @@
 import type { DayMark, ExerciseLog, Match, TemplateRow, Exercise } from '../db';
-import { addDays, mondayOf, weekDays, weekdayMon, dayName } from './dates';
+import { addDays, weekDays, weekdayMon, dayName } from './dates';
 
 export interface FootballEvent {
   date: string;
@@ -10,6 +10,7 @@ export interface FootballEvent {
 
 /** Allenamenti ricorrenti (giorno della settimana) dalla data di inizio, meno quelli annullati. */
 export function trainingDates(from: string, to: string, weekday: number, startDate: string, marks: DayMark[]): string[] {
+  if (weekday < 0 || weekday > 6) return [];
   const cancelled = new Set(marks.filter((m) => m.type === 'training_cancelled').map((m) => m.date));
   const out: string[] = [];
   let d = from < startDate ? startDate : from;
@@ -61,15 +62,12 @@ export function logLegSets(logs: ExerciseLog[]): number {
 
 /**
  * Motivo per cui oggi le gambe pesanti sono sconsigliate, oppure null.
- * Regole: giorno della partita, giorno prima, martedì o giovedì di una settimana con partita il venerdì.
+ * Regole: giorno della partita e giorno prima.
  */
 export function legWarning(date: string, matches: Match[]): string | null {
   const matchDates = new Set(matches.map((m) => m.date));
   if (matchDates.has(date)) return 'Oggi hai la partita.';
   if (matchDates.has(addDays(date, 1))) return `Domani (${dayName(addDays(date, 1))}) hai la partita.`;
-  const wd = weekdayMon(date);
-  const friday = addDays(mondayOf(date), 4);
-  if ((wd === 1 || wd === 3) && matchDates.has(friday)) return 'Questa settimana giochi venerdì.';
   return null;
 }
 
@@ -121,7 +119,7 @@ export function suggestWeek(monday: string, matches: Match[], trainings: string[
   return best.map((d) => {
     const warn = legWarning(d, matches);
     let note = warn ? 'solo parte alta' : 'gambe ok';
-    if (training.has(d)) note += ', c’è anche l’allenamento di calcio';
+    if (training.has(d)) note += ', c’è anche l’allenamento';
     if (matchDates.has(addDays(d, -1))) note += ', dopo la partita: leggero';
     return { date: d, legsOk: !warn, note };
   });

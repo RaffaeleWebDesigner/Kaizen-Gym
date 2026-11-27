@@ -94,8 +94,7 @@ export default function CalendarPage() {
           <div className="grid grid-cols-2 gap-y-2">
             <div className="flex items-center gap-2"><span className="text-accent font-black text-lg">✕</span> seduta</div>
             <div className="flex items-center gap-2"><span className="text-minima font-black">✕</span> seduta minima</div>
-            <div>⚽ allenamento calcio</div>
-            <div>🏟️ partita</div>
+            {data.settings.sportEnabled && <><div>⚽ allenamento {data.settings.sportName.toLowerCase()}</div><div>🏟️ partita</div></>}
             <div>❌ seduta saltata</div>
             <div>🤒 malattia (giustificata)</div>
           </div>
@@ -184,7 +183,7 @@ function DaySheet({ date, data, onClose }: { date: string; data: AppData; onClos
       <div className="grid grid-cols-3 gap-2">
         {!future && <Button variant="danger" className="text-sm" onClick={() => nav(`/salta?data=${date}`)}>❌ Saltata</Button>}
         <Button className="text-sm" onClick={async () => { await db.dayMarks.add({ date, type: 'sick', reason: 'Malattia' }); toast('Malattia segnata'); }}>🤒 Malattia</Button>
-        <Button className="text-sm" onClick={() => nav(`/calcio?data=${date}`)}>🏟️ Partita</Button>
+        {data.settings.sportEnabled && <Button className="text-sm" onClick={() => nav(`/calcio?data=${date}`)}>🏟️ Partita</Button>}
       </div>
     </Sheet>
   );

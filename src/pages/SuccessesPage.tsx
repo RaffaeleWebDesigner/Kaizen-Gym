@@ -6,7 +6,7 @@ import { useData, type AppData } from '../lib/useData';
 import { LABEL_TEXT, verifySuccess, type VerifyData } from '../lib/derived';
 import { fmtDateFull, mondayOf, todayISO } from '../lib/dates';
 
-const CAT_LABEL: Record<Success['category'], string> = { palestra: '🏋️ Palestra', calcio: '⚽ Calcio', vita: '🌱 Vita' };
+const CAT_LABEL: Record<Success['category'], string> = { palestra: '🏋️ Palestra', calcio: '⚽ Sport', vita: '🌱 Vita' };
 
 export function useVerifyData(data: AppData | undefined): VerifyData | null {
   const attempts = useLiveQuery(() => db.challengeAttempts.toArray(), []);

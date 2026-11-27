@@ -34,7 +34,7 @@ export type RankKey = 'panca' | 'squat' | 'stacco' | 'military' | 'trazioni' | '
 export type SkipCategory = 'videogiochi' | 'sonno' | 'impegni' | 'lavoro' | 'pigrizia' | 'altro';
 
 export const SKIP_CATEGORY_LABEL: Record<SkipCategory, string> = {
-  videogiochi: 'Videogiochi',
+  videogiochi: 'Videogiochi, serie, social',
   sonno: 'Sonno / stanchezza',
   impegni: 'Impegni',
   lavoro: 'Lavoro',

@@ -1,19 +1,13 @@
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Button, Card, Chips, Field, Header, Sheet, inputCls, toast } from '../components/ui';
+import { Button, Card, Chips, Field, Header, Sheet, Toggle, inputCls, toast } from '../components/ui';
 import { db, type Match } from '../db';
 import { useData } from '../lib/useData';
-import { addDays, dayName, DAY_SHORT_LIST, fmtDate, fmtDateLong, mondayOf, todayISO, weekdayMon } from '../lib/dates';
+import { addDays, dayName, DAY_SHORT_LIST, fmtDate, fmtDateLong, mondayOf, todayISO } from '../lib/dates';
 import { suggestWeek, trainingDates } from '../lib/football';
 import { setSetting } from '../lib/settings';
 
-const defaultTime = (date: string) => ({ 4: '21:00', 5: '14:00', 0: '21:00' } as Record<number, string>)[weekdayMon(date)] ?? '21:00';
-
-function nextFriday(from: string) {
-  let d = from;
-  while (weekdayMon(d) !== 4) d = addDays(d, 1);
-  return d;
-}
+const defaultTime = (_date: string) => '20:00';
 
 export default function FootballPage() {
   const data = useData();
@@ -28,9 +22,19 @@ export default function FootballPage() {
 
   return (
     <div className="pb-nav">
-      <Header title="Calcio e pianificazione" back="/altro" />
+      <Header title={data.settings.sportEnabled ? `${data.settings.sportName} e pianificazione` : 'Altro sport'} back="/altro" />
       <div className="p-4 space-y-3">
-        <Button big variant="primary" className="w-full" onClick={() => { const d = nextFriday(today); setEdit({ date: d, time: defaultTime(d), venue: null }); }}>+ Aggiungi partita</Button>
+        <Card>
+          <Toggle label="Faccio anche un altro sport" checked={data.settings.sportEnabled} onChange={(v) => setSetting('sportEnabled', v)} />
+          <p className="text-xs text-muted mt-1">Se lo accendi, segni partite e allenamenti: ti consiglio i giorni migliori per la palestra e ti avviso prima di fare gambe pesanti alla vigilia di una partita.</p>
+          {data.settings.sportEnabled && (
+            <Field label="Quale sport">
+              <input className={inputCls} defaultValue={data.settings.sportName} onBlur={(e) => e.target.value.trim() && setSetting('sportName', e.target.value.trim())} />
+            </Field>
+          )}
+        </Card>
+        {data.settings.sportEnabled && <>
+        <Button big variant="primary" className="w-full" onClick={() => setEdit({ date: today, time: defaultTime(today), venue: null })}>+ Aggiungi partita</Button>
 
         {weeks.map((mon, i) => {
           const trainings = trainingDates(mon, addDays(mon, 6), data.settings.trainingWeekday, data.settings.startDate, data.marks);
@@ -61,7 +65,7 @@ export default function FootballPage() {
 
         <Card>
           <div className="font-semibold mb-1">Avviso gambe pesanti</div>
-          <p className="text-sm text-muted">Ti avviso se stai per fare gambe pesanti il giorno della partita, il giorno prima, oppure martedì o giovedì in una settimana con partita il venerdì. Ti propongo la parte alta.</p>
+          <p className="text-sm text-muted">Ti avviso se stai per fare gambe pesanti il giorno della partita o il giorno prima. Ti propongo la parte alta.</p>
         </Card>
 
         <h2 className="font-bold pt-2">Partite in arrivo</h2>
@@ -70,7 +74,7 @@ export default function FootballPage() {
 
         <Card>
           <div className="font-semibold mb-2">Allenamento di squadra ricorrente</div>
-          <Chips options={DAY_SHORT_LIST.map((d, i) => ({ value: i, label: d }))} value={data.settings.trainingWeekday} onChange={(v) => setSetting('trainingWeekday', v)} />
+          <Chips options={[{ value: -1, label: 'Nessuno' }, ...DAY_SHORT_LIST.map((d, i) => ({ value: i, label: d }))]} value={data.settings.trainingWeekday} onChange={(v) => setSetting('trainingWeekday', v)} />
           <p className="text-xs text-muted mt-2">Si ripete ogni settimana. Per annullarne uno, toccalo nel calendario.</p>
         </Card>
 
@@ -80,6 +84,7 @@ export default function FootballPage() {
             {past.map((m) => <MatchRow key={m.id} m={m} onEdit={() => setEdit(m)} />)}
           </>
         )}
+        </>}
       </div>
       {edit && <MatchSheet match={edit} onClose={() => setEdit(null)} />}
     </div>

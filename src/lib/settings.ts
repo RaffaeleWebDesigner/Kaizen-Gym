@@ -29,6 +29,16 @@ export interface Notice {
 
 export type Thresholds = Record<RankKey, [number, number, number, number, number]>;
 
+/** Soglie indicative per le donne (indice = massimale stimato / peso corporeo). */
+export const DEFAULT_THRESHOLDS_F: Thresholds = {
+  panca: [0.25, 0.5, 0.75, 1.0, 1.25],
+  squat: [0.5, 0.75, 1.0, 1.5, 1.75],
+  stacco: [0.6, 1.0, 1.25, 1.75, 2.25],
+  military: [0.2, 0.35, 0.5, 0.7, 0.85],
+  trazioni: [1.0, 1.05, 1.15, 1.3, 1.5],
+  dip: [1.0, 1.1, 1.25, 1.45, 1.7],
+};
+
 export const DEFAULT_THRESHOLDS: Thresholds = {
   panca: [0.5, 0.75, 1.0, 1.5, 2.0],
   squat: [0.75, 1.25, 1.5, 2.0, 2.5],
@@ -64,13 +74,17 @@ export interface AppSettings {
   // Kaizen-Gym: percorso di benvenuto
   onboarded: boolean;
   profile: Profile | null;
+  sportEnabled: boolean; // modulo partite e allenamenti di un altro sport
+  sportName: string;
+  rankEnabled: boolean;
+  sex: 'm' | 'f' | null; // solo per le soglie del rank
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
   startDate: '2026-11-16',
   heightCm: 170,
   weeklyGoal: 3,
-  trainingWeekday: 2,
+  trainingWeekday: -1, // -1 = nessun allenamento ricorrente
   lbPerBlock: 15,
   lastBackupAt: null,
   createdAt: Date.now(),
@@ -101,6 +115,10 @@ export const DEFAULT_SETTINGS: AppSettings = {
   notices: [],
   onboarded: false,
   profile: null,
+  sportEnabled: false,
+  sportName: 'Calcio',
+  rankEnabled: true,
+  sex: null,
 };
 
 export async function getSettings(): Promise<AppSettings> {

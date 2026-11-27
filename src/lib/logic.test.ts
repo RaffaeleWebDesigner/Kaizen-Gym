@@ -80,10 +80,10 @@ describe('costanza', () => {
 
 describe('calcio', () => {
   const m = [{ date: '2026-11-27', time: '21:00', venue: null }];
-  it('avvisa giorno partita, vigilia, martedì e giovedì', () => {
+  it('avvisa il giorno della partita e la vigilia', () => {
     expect(legWarning('2026-11-27', m)).toBeTruthy();
     expect(legWarning('2026-11-26', m)).toBeTruthy();
-    expect(legWarning('2026-11-24', m)).toBeTruthy();
+    expect(legWarning('2026-11-24', m)).toBeNull();
     expect(legWarning('2026-11-23', m)).toBeNull();
     expect(legWarning('2026-11-25', m)).toBeNull();
   });
@@ -93,5 +93,12 @@ describe('calcio', () => {
     expect(dates).toHaveLength(3);
     expect(dates).not.toContain('2026-11-27');
     expect(dates).not.toContain('2026-11-25');
+  });
+});
+
+describe('sport spento', () => {
+  it('nessun allenamento ricorrente se il giorno è -1', async () => {
+    const { trainingDates } = await import('./football');
+    expect(trainingDates('2026-11-23', '2026-12-31', -1, '2026-11-01', [])).toEqual([]);
   });
 });
