@@ -3,9 +3,8 @@ import { Card, Header } from '../components/ui';
 import { MIN_AGE, PRIVACY_VERSION } from '../lib/privacy';
 
 // BOZZA da far controllare a un professionista prima di aprire l'app al pubblico.
-// I campi tra parentesi quadre vanno compilati da chi pubblica l'app.
-const OWNER = '[Nome e cognome del titolare]';
-const CONTACT = '[email di contatto per la privacy]';
+const OWNER = 'Raffaele Ciccarelli';
+const CONTACT = 'raffo.cicca@gmail.com';
 
 function S({ title, children }: { title: string; children: ReactNode }) {
   return (

@@ -7,7 +7,7 @@ In Supabase (progetto **kaizen-gym**) → SQL Editor → New query: incolla `sup
 Senza questo, "Elimina account" e lo spegnimento delle misure nel cloud danno errore.
 
 ## 2. Informativa
-In `src/pages/PrivacyPage.tsx` vanno compilati titolare e email di contatto (`OWNER`, `CONTACT`).
+Titolare ed email di contatto sono in `src/pages/PrivacyPage.tsx` (`OWNER`, `CONTACT`).
 Il testo è una bozza: prima della pubblicazione vera va controllato da un professionista privacy.
 Se cambi il testo in modo sostanziale, aggiorna `PRIVACY_VERSION` in `src/lib/privacy.ts`: l'app richiederà il consenso.
 
