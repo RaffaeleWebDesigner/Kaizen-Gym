@@ -1,4 +1,4 @@
--- Metodo Kaizen: database per la sincronizzazione tra dispositivi.
+-- Kaizen-Gym: database per la sincronizzazione tra dispositivi.
 -- Da incollare una volta in Supabase → SQL Editor → New query → Run.
 -- Si può rieseguire senza problemi: non cancella dati.
 
@@ -57,3 +57,5 @@ stable
 as $$ select 'ok'::text $$;
 
 grant execute on function public.ping() to anon, authenticated;
+
+-- La cancellazione completa dell'account è in 02-cancellazione-account.sql.

@@ -1,5 +1,6 @@
 import type { DBCore, DBCoreMutateRequest, DBCoreTable, Middleware } from 'dexie';
 import { idFromKey, newId } from './ids';
+import { healthSyncAllowed } from '../lib/privacy';
 
 /** Tabelle sincronizzate. Le foto restano solo sul dispositivo. */
 export const SYNC_TABLES = [
@@ -8,6 +9,11 @@ export const SYNC_TABLES = [
 ] as const;
 export type SyncTable = (typeof SYNC_TABLES)[number];
 const SYNCED = new Set<string>(SYNC_TABLES);
+
+/** Le misure del corpo sono dati sulla salute: vanno nel cloud solo con il consenso. */
+export function syncedTables(): SyncTable[] {
+  return healthSyncAllowed() ? [...SYNC_TABLES] : SYNC_TABLES.filter((t) => t !== 'measurements');
+}
 
 export interface OutboxEntry {
   k: string; // tbl + SEP + rid
@@ -68,7 +74,7 @@ export const syncMiddleware: Middleware<DBCore> = {
       },
       table(name) {
         const table = down.table(name);
-        if (!SYNCED.has(name)) return table;
+        if (!SYNCED.has(name) || (name === 'measurements' && !healthSyncAllowed())) return table;
         return {
           ...table,
           async mutate(req0) {

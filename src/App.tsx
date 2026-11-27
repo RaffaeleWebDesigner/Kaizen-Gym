@@ -30,6 +30,8 @@ import RankPage from './pages/RankPage';
 import NoticeHost from './components/NoticeHost';
 import AccountPage from './pages/AccountPage';
 import OnboardingPage from './pages/OnboardingPage';
+import PrivacyPage from './pages/PrivacyPage';
+import ConsentPage from './pages/ConsentPage';
 
 const TABS = [
   { to: '/', label: 'Oggi', icon: '●' },
@@ -41,7 +43,7 @@ const TABS = [
 
 function BottomNav() {
   const loc = useLocation();
-  if (loc.pathname === '/benvenuto' || loc.pathname.startsWith('/seduta/') || loc.pathname.startsWith('/foto/scatta')) return null;
+  if (loc.pathname === '/benvenuto' || loc.pathname === '/consenso' || loc.pathname.startsWith('/seduta/') || loc.pathname.startsWith('/foto/scatta')) return null;
   return (
     <nav className="fixed bottom-0 inset-x-0 z-30 bg-bg/95 backdrop-blur border-t border-line pb-[env(safe-area-inset-bottom)]">
       <div className="max-w-lg mx-auto grid grid-cols-5">
@@ -68,6 +70,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Today />} />
           <Route path="/benvenuto" element={<OnboardingPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/consenso" element={<ConsentPage />} />
           <Route path="/seduta/:id" element={<SessionPage />} />
           <Route path="/fatta/:id" element={<SessionDone />} />
           <Route path="/salta" element={<SkipPage />} />

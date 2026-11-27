@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Button, Card, Chips, Field, Header, NumInput, Stepper, Toggle, inputCls } from '../components/ui';
+import { Button, Card, Chips, Field, Header, NumInput, Stepper, Toggle, inputCls, toast } from '../components/ui';
+import { setHealthConsent } from '../lib/privacy';
 import { DEFAULT_THRESHOLDS, DEFAULT_THRESHOLDS_F, setSetting, useSettings } from '../lib/settings';
 import { LB_TO_KG, fmtNum } from '../lib/units';
 import { RANK_EXERCISE_LABEL } from '../lib/rank';
@@ -17,8 +18,21 @@ export default function SettingsPage() {
         <Card className="p-0 divide-y divide-line">
           <Link to="/attrezzatura" className="flex justify-between items-center px-4 min-h-[56px]"><span>🏋️ Attrezzatura e programma</span><span className="text-muted">›</span></Link>
           <Link to="/lettera" className="flex justify-between items-center px-4 min-h-[56px]"><span>✉️ Lettera del giorno 1</span><span className="text-muted">›</span></Link>
+          <Link to="/privacy" className="flex justify-between items-center px-4 min-h-[56px]"><span>🔒 Privacy e termini</span><span className="text-muted">›</span></Link>
           <Link to="/promemoria" className="flex justify-between items-center px-4 min-h-[56px]"><span>⏰ Promemoria</span><span className="text-muted">›</span></Link>
         </Card>
+        {s.consent && (
+          <Card>
+            <Toggle label="Peso e misure del corpo nel cloud" checked={s.consent.health} onChange={async (v) => {
+              try {
+                const { forgetRemoteMeasurements } = await import('../sync');
+                await setHealthConsent(v, s.consent!, forgetRemoteMeasurements);
+                toast(v ? 'Le misure ora si sincronizzano' : 'Misure tolte dal cloud: restano solo qui');
+              } catch (e) { toast((e as Error).message); }
+            }} />
+            <p className="text-xs text-muted mt-1">Sono dati sulla salute. Se lo spegni restano solo su questo dispositivo e vengono tolti dal cloud.</p>
+          </Card>
+        )}
         <Card>
           <Field label="Inizio progetto">
             <input type="date" className={inputCls} value={s.startDate} onChange={(e) => e.target.value && setSetting('startDate', e.target.value)} />

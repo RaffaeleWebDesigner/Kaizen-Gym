@@ -2,7 +2,10 @@ import { useState } from 'react';
 import { Button, Card, Confirm, Header, Sheet, toast } from '../components/ui';
 import { downloadBackup } from '../lib/exportData';
 import { fmtDate } from '../lib/dates';
-import { link, resetAccount, restoreInternalBackup, signIn, signOut, signUp, syncNow, useSync } from '../sync';
+import { deleteEverything, link, resetAccount, restoreInternalBackup, signIn, signOut, signUp, syncNow, useSync } from '../sync';
+import { Link } from 'react-router-dom';
+import { saveConsent } from '../lib/privacy';
+import { getSettings } from '../lib/settings';
 
 const input = 'w-full min-h-[48px] bg-surface2 border border-line rounded-xl px-3 text-base';
 
@@ -21,6 +24,7 @@ function LoginForm() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
+  const [cloudOk, setCloudOk] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +32,12 @@ function LoginForm() {
     setErr(null);
     try {
       if (mode === 'in') await signIn(email, pw);
-      else if (await signUp(email, pw)) setSent(true);
+      else {
+        if (!cloudOk) throw new Error('Serve il consenso per salvare i dati nel cloud.');
+        const c = (await getSettings()).consent;
+        await saveConsent({ age: c?.age ?? true, health: c?.health ?? false, cloud: true });
+        if (await signUp(email, pw)) setSent(true);
+      }
     } catch (x) {
       setErr((x as Error).message);
     } finally {
@@ -40,7 +49,7 @@ function LoginForm() {
     return (
       <Card>
         <h2 className="font-bold mb-1">Controlla la posta</h2>
-        <p className="text-sm text-muted">Ti è arrivata un’email da Supabase: apri il link per confermare l’account. Si aprirà nel browser: va bene così. Poi torna qui e accedi con email e password.</p>
+        <p className="text-sm text-muted">Ti è arrivata un’email di conferma: apri il link per confermare l’account. Si aprirà nel browser: va bene così. Poi torna qui e accedi con email e password.</p>
         <Button className="w-full mt-3" onClick={() => { setSent(false); setMode('in'); }}>Ho confermato, accedo</Button>
       </Card>
     );
@@ -53,6 +62,13 @@ function LoginForm() {
       <form onSubmit={submit} className="space-y-2">
         <input className={input} type="email" autoComplete="email" inputMode="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         <input className={input} type="password" autoComplete={mode === 'in' ? 'current-password' : 'new-password'} placeholder="Password (almeno 6 caratteri)" value={pw} onChange={(e) => setPw(e.target.value)} required minLength={6} />
+        {mode === 'up' && (
+          <button type="button" role="checkbox" aria-checked={cloudOk} onClick={() => setCloudOk(!cloudOk)}
+            className={`w-full flex items-start gap-3 text-left rounded-2xl border px-3 py-3 ${cloudOk ? 'border-accent bg-accent/10' : 'border-line bg-surface2'}`}>
+            <span className={`mt-0.5 shrink-0 w-6 h-6 rounded-md border grid place-items-center text-sm ${cloudOk ? 'bg-accent border-accent text-black' : 'border-muted'}`}>{cloudOk ? '✓' : ''}</span>
+            <span className="text-sm">Acconsento a salvare nel cloud (in Europa) i miei dati di allenamento, compresi quelli che riguardano la salute come malattia e dolori, per sincronizzarli tra i miei dispositivi. <Link to="/privacy" className="text-accent underline" onClick={(e) => e.stopPropagation()}>Informativa</Link></span>
+          </button>
+        )}
         {err && <p className="text-sm text-danger">{err}</p>}
         <Button big variant="primary" className="w-full" disabled={busy}>{busy ? 'Un attimo…' : mode === 'in' ? 'Accedi' : 'Crea account'}</Button>
       </form>
@@ -70,6 +86,9 @@ export default function AccountPage() {
   const [choice, setChoice] = useState<'cloud' | 'device' | null>(null);
   const [resetOpen, setResetOpen] = useState(false);
   const [resetText, setResetText] = useState('');
+  const [delOpen, setDelOpen] = useState(false);
+  const [delText, setDelText] = useState('');
+  const [delBusy, setDelBusy] = useState(false);
 
   // Il download del file resta separato dal collegamento: su iPhone apre un'anteprima
   // che interrompe la pagina, quindi non va mai messo in fila prima di link().
@@ -168,6 +187,16 @@ export default function AccountPage() {
           </Card>
         )}
 
+        {s.phase !== 'loading' && (
+          <Card>
+            <h2 className="font-bold mb-1">{s.email ? 'Elimina account' : 'Cancella i dati di questo dispositivo'}</h2>
+            <p className="text-sm text-muted mb-3">{s.email
+              ? 'Cancella per sempre l’account (email e password) e tutti i suoi dati, nel cloud e su questo dispositivo, foto comprese. Prima scarica una copia se ti serve.'
+              : 'Cancella per sempre tutti i dati di questo dispositivo, foto comprese. Prima scarica una copia se ti serve.'}</p>
+            <Button variant="danger" className="w-full" onClick={() => { setDelText(''); setDelOpen(true); }}>{s.email ? 'Elimina account…' : 'Cancella tutto…'}</Button>
+          </Card>
+        )}
+
         {s.backupAt && (
           <Card>
             <h2 className="font-bold mb-1">Copia di sicurezza</h2>
@@ -184,6 +213,19 @@ export default function AccountPage() {
         <div className="grid grid-cols-2 gap-2">
           <Button onClick={() => setResetOpen(false)}>Annulla</Button>
           <Button variant="danger" disabled={resetText.trim().toUpperCase() !== 'AZZERA'} onClick={async () => { setResetOpen(false); await resetAccount(); toast('Account azzerato'); }}>Azzera</Button>
+        </div>
+      </Sheet>
+
+      <Sheet open={delOpen} onClose={() => setDelOpen(false)} title={s.email ? 'Eliminare l’account?' : 'Cancellare tutto?'}>
+        <p className="text-muted mb-3">{s.email ? <>L’account <b className="text-ink">{s.email}</b> e tutti i suoi dati spariscono per sempre, qui e nel cloud. Gli altri dispositivi collegati non potranno più sincronizzare.</> : 'Tutti i dati e le foto di questo dispositivo spariscono per sempre.'} Non si può annullare.</p>
+        <p className="text-sm text-muted mb-2">Per confermare scrivi <b className="text-ink">ELIMINA</b>.</p>
+        <input className={input + ' mb-3'} value={delText} onChange={(e) => setDelText(e.target.value)} autoCapitalize="characters" />
+        <div className="grid grid-cols-2 gap-2">
+          <Button onClick={() => setDelOpen(false)}>Annulla</Button>
+          <Button variant="danger" disabled={delBusy || delText.trim().toUpperCase() !== 'ELIMINA'} onClick={async () => {
+            setDelBusy(true);
+            try { await deleteEverything(); } catch (e) { setDelBusy(false); toast((e as Error).message); }
+          }}>{delBusy ? 'Elimino…' : 'Elimina'}</Button>
         </div>
       </Sheet>
 

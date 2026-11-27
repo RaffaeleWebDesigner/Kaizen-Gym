@@ -1,0 +1,57 @@
+# Copia di sicurezza settimanale del database Kaizen-Gym (il piano gratuito di Supabase non la fa).
+# Serve impostare due secret nel repo (Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL     stringa di connessione "Session pooler" di Supabase (con la password del database)
+#   BACKUP_PASSPHRASE   una frase lunga a piacere: il file viene cifrato con questa
+# La copia cifrata resta tra gli "artifact" del workflow per 60 giorni.
+name: Backup database
+
+on:
+  schedule:
+    - cron: '23 3 * * 1' # ogni lunedì alle 3:23 UTC
+  workflow_dispatch:
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Controllo dei secret
+        id: check
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$DB" ] || [ -z "$PASS" ]; then
+            echo "::notice::Backup saltato: mancano i secret SUPABASE_DB_URL e/o BACKUP_PASSPHRASE"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Installa pg_dump 17
+        if: steps.check.outputs.ok == 'true'
+        run: |
+          sudo apt-get install -y -q postgresql-common
+          sudo /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+          sudo apt-get install -y -q postgresql-client-17
+
+      - name: Copia e cifra
+        if: steps.check.outputs.ok == 'true'
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          f="kaizen-gym-$(date -u +%Y-%m-%d).sql.gz"
+          /usr/lib/postgresql/17/bin/pg_dump "$DB" --no-owner --no-privileges --data-only \
+            -t public.kaizen_rows -t auth.users -t auth.identities | gzip > "$f"
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$PASS" --symmetric --cipher-algo AES256 -o "$f.gpg" "$f"
+          rm "$f"
+          ls -la "$f.gpg"
+
+      - name: Salva la copia
+        if: steps.check.outputs.ok == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-database
+          path: '*.gpg'
+          retention-days: 60

@@ -8,9 +8,11 @@ import {
   type Equip, type Experience, type Goal, type MachineStep, type Place, type Program,
 } from '../lib/onboarding';
 import type { Unit } from '../db';
+import ConsentForm, { type ConsentState } from '../components/ConsentForm';
+import { saveConsent } from '../lib/privacy';
 
 const WEEKDAYS = ['Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab', 'Dom'];
-type Step = 'benvenuto' | 'obiettivo' | 'esperienza' | 'rank' | 'dove' | 'attrezzatura' | 'unita' | 'giorni' | 'sicurezza' | 'riepilogo';
+type Step = 'benvenuto' | 'privacy' | 'obiettivo' | 'esperienza' | 'rank' | 'dove' | 'attrezzatura' | 'unita' | 'giorni' | 'sicurezza' | 'riepilogo';
 
 function Choice({ selected, title, text, onClick }: { selected: boolean; title: string; text?: string; onClick: () => void }) {
   return (
@@ -48,11 +50,12 @@ export default function OnboardingPage() {
   const [safety, setSafety] = useState<Record<string, boolean | undefined>>({});
   const [accepted, setAccepted] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [consent, setConsent] = useState<ConsentState>({ privacy: false, age: false, health: false });
   const [rank, setRank] = useState<'m' | 'f' | 'off' | null>(null);
 
   const usesMachines = place !== null && equipmentFor({ place, equipment }).some((e) => e === 'cavi' || e === 'macchine');
   const steps: Step[] = useMemo(() => {
-    const s: Step[] = ['benvenuto', 'obiettivo', 'esperienza', 'rank', 'dove'];
+    const s: Step[] = ['benvenuto', 'privacy', 'obiettivo', 'esperienza', 'rank', 'dove'];
     if (place === 'casa') s.push('attrezzatura');
     s.push('unita', 'giorni', 'sicurezza', 'riepilogo');
     return s;
@@ -69,12 +72,13 @@ export default function OnboardingPage() {
     if (!goal || !experience || !place) return;
     setSaving(true);
     try {
+      await saveConsent({ age: consent.age, health: consent.health });
       await setSetting('rankEnabled', rank !== 'off');
       if (rank === 'm' || rank === 'f') {
         await setSetting('sex', rank);
         await setSetting('rankThresholds', rank === 'f' ? DEFAULT_THRESHOLDS_F : DEFAULT_THRESHOLDS);
       }
-      await applyOnboarding({ goal, experience, place, equipment, unit, machineStep, days, program: prog, gymDays, safetyFlags: flags, acceptedAt: Date.now() });
+      await applyOnboarding({ goal, experience, place, equipment, unit, machineStep, days, program: prog, gymDays, safetyFlags: [], acceptedAt: Date.now() });
       nav('/lettera?primo=1', { replace: true });
     } catch {
       setSaving(false);
@@ -102,6 +106,14 @@ export default function OnboardingPage() {
         </div>
       );
       nextLabel = 'Iniziamo';
+      break;
+    case 'privacy':
+      body = (
+        <Q title="I tuoi dati restano tuoi" hint="Senza account tutto resta su questo telefono. Se crei un account, i dati vengono copiati in un archivio in Europa solo per sincronizzarli. Le foto restano sempre sul telefono.">
+          <ConsentForm value={consent} onChange={setConsent} />
+        </Q>
+      );
+      canNext = consent.privacy && consent.age;
       break;
     case 'obiettivo':
       body = (
@@ -195,7 +207,7 @@ export default function OnboardingPage() {
       break;
     case 'sicurezza':
       body = (
-        <Q title="Prima di iniziare, la tua salute" hint="Rispondi con sincerità. Le risposte restano tue e servono solo a consigliarti prudenza.">
+        <Q title="Prima di iniziare, la tua salute" hint="Rispondi con sincerità. Le risposte non vengono salvate: servono solo a consigliarti prudenza.">
           {SAFETY_QUESTIONS.map((q) => (
             <Card key={q.key} className="p-3">
               <div className="text-sm mb-2">{q.text}</div>

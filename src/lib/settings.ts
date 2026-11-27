@@ -1,6 +1,7 @@
 import { useLiveQuery } from 'dexie-react-hooks';
 import { db, type RankKey } from '../db';
 import type { Profile } from './onboarding';
+import type { Consent } from './privacy';
 
 export interface PlateInv {
   weight: number; // kg
@@ -78,6 +79,7 @@ export interface AppSettings {
   sportName: string;
   rankEnabled: boolean;
   sex: 'm' | 'f' | null; // solo per le soglie del rank
+  consent: Consent | null;
 }
 
 export const DEFAULT_SETTINGS: AppSettings = {
@@ -119,6 +121,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   sportName: 'Calcio',
   rankEnabled: true,
   sex: null,
+  consent: null,
 };
 
 export async function getSettings(): Promise<AppSettings> {

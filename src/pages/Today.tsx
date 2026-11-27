@@ -19,6 +19,7 @@ import { levelName } from '../lib/rank';
 import { useRanks } from './RankPage';
 import { LetterOverlay } from './LetterPage';
 import { setSetting } from '../lib/settings';
+import { consentValid } from '../lib/privacy';
 
 export default function Today() {
   const data = useData();
@@ -39,6 +40,7 @@ export default function Today() {
 
   if (!data || !photos || !attempts || !challenges || successCount === undefined) return null;
   if (!data.settings.onboarded) return <Navigate to="/benvenuto" replace />;
+  if (!consentValid(data.settings.consent)) return <Navigate to="/consenso" replace />;
   if (!data.settings.letterPrompted) return <Navigate to="/lettera?primo=1" replace />;
   const today = todayISO();
   const { sessions, marks, matches, settings } = data;

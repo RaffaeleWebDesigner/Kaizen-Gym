@@ -1,5 +1,13 @@
 import 'fake-indexeddb/auto';
 import { describe, expect, it } from 'vitest';
+
+// I test simulano un account che ha dato il consenso ai dati sulla salute (misure sincronizzate).
+const store = new Map<string, string>([['kaizen-health-consent:kaizen', '1']]);
+(globalThis as any).localStorage = {
+  getItem: (k: string) => store.get(k) ?? null,
+  setItem: (k: string, v: string) => void store.set(k, v),
+  removeItem: (k: string) => void store.delete(k),
+};
 import { KaizenDB } from '../db';
 import { SyncEngine } from './engine';
 import { MemoryRemote } from './remote';
@@ -258,5 +266,21 @@ describe('aggiornamento dalla v3', () => {
     // dopo l'aggiornamento le righe nuove hanno id unici, quelle vecchie restano 1, 2
     const id = await db.sessions.add({ date: '2026-11-27', kind: 'C', status: 'done', exercises: [] } as any);
     expect((await db.sessions.toArray()).map((s) => s.id)).toEqual([1, 2, id]);
+  });
+});
+
+describe('consenso ai dati sulla salute', () => {
+  it('senza consenso le misure restano sul dispositivo', async () => {
+    store.set('kaizen-health-consent:kaizen', '0');
+    try {
+      const db = new KaizenDB(`kaizen-test-consenso-${Math.random()}`);
+      await db.measurements.add({ date: '2026-11-27', weight: 70 } as never);
+      await db.sessions.add({ date: '2026-11-27', kind: 'A', status: 'done', startedAt: null, endedAt: null, durationMin: null, feeling: null, notes: '', exercises: [] } as never);
+      const tbls = (await db.outbox.toArray()).map((o: any) => o.tbl);
+      expect(tbls).toContain('sessions');
+      expect(tbls).not.toContain('measurements');
+    } finally {
+      store.set('kaizen-health-consent:kaizen', '1');
+    }
   });
 });

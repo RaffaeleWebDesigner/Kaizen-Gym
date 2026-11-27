@@ -1,10 +1,11 @@
+import Dexie from 'dexie';
 import { useSyncExternalStore } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { db } from '../db';
 import { SyncEngine, type Choice, type FirstSyncPlan } from './engine';
 import { onLocalChange } from './middleware';
 import { SUPABASE_KEY, SUPABASE_URL } from './config';
-import { activeDbName, dbForUser, dbNameForNewUser, isFreshDb, registerDb, switchDb } from './activeDb';
+import { activeDbName, forgetDb, dbForUser, dbNameForNewUser, isFreshDb, registerDb, switchDb } from './activeDb';
 
 export type SyncPhase = 'loading' | 'signedOut' | 'notLinked' | 'ask' | 'syncing' | 'ok' | 'error';
 
@@ -205,6 +206,37 @@ export async function resetAccount(): Promise<void> {
   } finally {
     exclusive = false;
   }
+}
+
+/**
+ * Cancella tutto: account nel cloud (dati, email e password) se collegato, e i dati su questo dispositivo
+ * (foto comprese). Poi ricarica l'app da zero.
+ */
+export async function deleteEverything(): Promise<void> {
+  const user = await currentUser().catch(() => null);
+  if (user) {
+    const { error } = await (await sb()).rpc('delete_my_account');
+    if (error) throw new Error(friendlyError(error));
+    await (await sb()).auth.signOut({ scope: 'local' }).catch(() => undefined);
+  }
+  const name = activeDbName();
+  db.close();
+  await Dexie.delete(name);
+  forgetDb(name);
+  try {
+    localStorage.removeItem('kaizen-auth');
+  } catch {
+    /* niente */
+  }
+  location.replace(location.pathname);
+}
+
+/** Toglie dal cloud le misure del corpo (revoca del consenso). Senza account non c'è niente da togliere. */
+export async function forgetRemoteMeasurements(): Promise<void> {
+  const user = await currentUser().catch(() => null);
+  if (!user) return;
+  const { error } = await (await sb()).rpc('forget_my_measurements');
+  if (error) throw new Error(friendlyError(error));
 }
 
 // ---------- account ----------

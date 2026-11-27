@@ -1,5 +1,5 @@
 import type { KaizenDB } from '../db';
-import { keyOf, outboxKey, REMOTE, ridOf, stamp, SYNC_TABLES, type OutboxEntry } from './middleware';
+import { keyOf, outboxKey, REMOTE, ridOf, stamp, SYNC_TABLES, syncedTables, type OutboxEntry } from './middleware';
 import type { Remote, RemoteRow } from './remote';
 
 const PAGE = 1000;
@@ -128,7 +128,7 @@ export class SyncEngine {
       const ts = stamp();
       const rows: RemoteRow[] = [];
       const localKeys = new Set<string>();
-      for (const t of SYNC_TABLES) {
+      for (const t of syncedTables()) {
         const table = this.db.table(t);
         const pk = table.schema.primKey.keyPath as string;
         for (const obj of await table.toArray()) {
@@ -156,12 +156,13 @@ export class SyncEngine {
 
   /** Sostituisce i dati di questo dispositivo con quelli del cloud (le foto restano). */
   private async replaceLocal(rows: RemoteRow[]) {
-    const tables = [...SYNC_TABLES.map((t) => this.db.table(t)), this.db.outbox];
+    const synced = syncedTables();
+    const tables = [...synced.map((t) => this.db.table(t)), this.db.outbox];
     await this.db.transaction('rw', tables, async (tx) => {
       (tx as any).idbtrans[REMOTE] = true;
-      for (const t of SYNC_TABLES) await this.db.table(t).clear();
+      for (const t of synced) await this.db.table(t).clear();
       await this.db.outbox.clear();
-      for (const t of SYNC_TABLES) {
+      for (const t of synced) {
         const data = rows.filter((r) => r.tbl === t && !r.deleted).map((r) => r.data);
         if (data.length) await this.db.table(t).bulkPut(data);
       }

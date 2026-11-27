@@ -41,3 +41,16 @@ export function switchDb(name: string, fresh: boolean) {
   write(ACTIVE, name);
 }
 export const dbNameForNewUser = (userId: string) => `kaizen-${userId}`;
+
+/** Dimentica un archivio (dopo averlo cancellato): togli dal registro e torna all'archivio di base. */
+export function forgetDb(name: string) {
+  const reg = read<Record<string, string>>(REGISTRY, {});
+  write(REGISTRY, Object.fromEntries(Object.entries(reg).filter(([, n]) => n !== name)));
+  write(FRESH, read<string[]>(FRESH, []).filter((n) => n !== name));
+  try {
+    localStorage.removeItem(`kaizen-health-consent:${name}`);
+  } catch {
+    /* niente */
+  }
+  write(ACTIVE, 'kaizen');
+}
