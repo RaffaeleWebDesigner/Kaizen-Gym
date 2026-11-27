@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { availableEquip, substitutesFor } from '../lib/catalog';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Button, Card, Chips, Confirm, Field, Header, NumInput, Sheet, Stepper, inputCls, toast } from '../components/ui';
 import PlateCalc from '../components/PlateCalc';
@@ -191,7 +192,8 @@ function ExerciseCard({ log, data, history, sessionDate, onChange, onRemove, onR
 }) {
   const [confirmRemove, setConfirmRemove] = useState(false);
   const [plates, setPlates] = useState(false);
-  const subs = (data.exById.get(log.exerciseId)?.substituteIds ?? []).map((id) => data.exById.get(id)).filter((x) => x && !x.archived);
+  const subEx = data.exById.get(log.exerciseId);
+  const subs = subEx ? substitutesFor(subEx, data.exercises, availableEquip(data.settings)) : [];
   const stalled = log.target?.kind === 'deload' || log.target?.advice === 'substitute';
   const prev = useMemo(() => lastLogOf(history.filter((h) => h.date <= sessionDate), log.exerciseId), [history, sessionDate, log.exerciseId]);
   const allDone = log.sets.length > 0 && log.sets.every((x) => x.done);
@@ -338,7 +340,7 @@ function PainSheet({ log, data, onClose, onSubstitute, onStop }: {
 }) {
   if (!log) return null;
   const ex = data.exById.get(log.exerciseId);
-  const subs = (ex?.substituteIds ?? []).map((id) => data.exById.get(id)).filter((x) => x && !x.archived);
+  const subs = ex ? substitutesFor(ex, data.exercises, availableEquip(data.settings)) : [];
   return (
     <Sheet open onClose={onClose} title="Ferma questo esercizio">
       <p className="mb-3">Il dolore è un segnale, non un ostacolo da superare. Oggi <b>{log.name}</b> finisce qui, e la prossima volta non ci sarà progressione.</p>

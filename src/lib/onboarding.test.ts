@@ -48,7 +48,7 @@ describe('applyOnboarding su un archivio nuovo', () => {
     await seedIfEmpty(true); await ensureV2(); await ensureV3(); await ensureMachines();
     for (const place of ['palestra', 'casa'] as const) {
       await applyOnboarding({ goal: 'massa', experience: 'esperto', place, equipment: place === 'casa' ? ['manubri'] : [], unit: 'lb',
-        machineStep: { value: 10, unit: 'lb' }, days: 4, gymDays: [0, 2, 4, 5], safetyFlags: [], acceptedAt: 1 });
+        machineStep: { value: 10, unit: 'lb' }, days: 4, program: 'ppl', gymDays: [0, 2, 4, 5], safetyFlags: [], acceptedAt: 1 });
       const ex = new Map((await db.exercises.toArray()).map((e) => [e.id!, e]));
       const tpls = await db.templates.toArray();
       expect(tpls.map((t) => t.code).sort()).toEqual(['A', 'B', 'C', 'MIN']);
@@ -70,5 +70,21 @@ describe('defaultInventory', () => {
   });
   it('casa senza bilanciere: nessun bilanciere', () => {
     expect(defaultInventory({ place: 'casa', equipment: ['manubri'], unit: 'kg' }).bars).toEqual([]);
+  });
+});
+
+describe('cambio di attrezzatura dopo il benvenuto', () => {
+  it('rifà le sedute con la nuova attrezzatura', async () => {
+    const { db } = await import('../db');
+    const { updateProfile } = await import('./onboarding');
+    const base = { goal: 'massa', experience: 'intermedio', place: 'casa', equipment: [], unit: 'kg', machineStep: { value: 5, unit: 'kg' },
+      days: 3, program: 'fullbody', gymDays: [], safetyFlags: [], acceptedAt: 1 } as import('./onboarding').Profile;
+    await updateProfile({ ...base, equipment: [] }, true);
+    const name = async () => { const t = await db.templates.where('code').equals('A').first(); return (await db.exercises.get(t!.rows[0].exerciseId))!.name; };
+    expect(await name()).toBe('Squat a corpo libero');
+    await updateProfile({ ...base, equipment: ['manubri'] }, true);
+    expect(await name()).toBe('Goblet squat');
+    await updateProfile({ ...base, place: 'palestra' }, false);
+    expect(await name()).toBe('Goblet squat'); // senza "rifai" le sedute restano
   });
 });

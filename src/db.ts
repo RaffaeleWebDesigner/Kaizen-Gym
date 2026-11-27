@@ -25,6 +25,8 @@ export interface Exercise {
   archived?: boolean;
   barId?: string | null; // bilanciere dell'inventario
   rankKey?: RankKey | null; // esercizio che dà un rank
+  needs?: import('./lib/onboarding').Equip[]; // attrezzi che servono (Kaizen-Gym)
+  pattern?: import('./lib/catalog').Pattern; // schema di movimento, per le varianti
 }
 
 export type RankKey = 'panca' | 'squat' | 'stacco' | 'military' | 'trazioni' | 'dip';

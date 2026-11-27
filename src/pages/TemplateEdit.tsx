@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { availableEquip, canDo } from '../lib/catalog';
 import { Link, useParams } from 'react-router-dom';
 import { Button, Card, Field, Header, Sheet, Stepper, inputCls } from '../components/ui';
 import { db, GROUP_LABEL, type Template, type TemplateRow } from '../db';
@@ -90,8 +91,12 @@ export default function TemplateEdit() {
 
 export function ExercisePicker({ open, onClose, onPick, filter }: { open: boolean; onClose: () => void; onPick: (id: number) => void; filter?: (id: number) => boolean }) {
   const data = useData();
+  const [showAll, setShowAll] = useState(false);
   if (!data) return null;
-  const list = data.exercises.filter((e) => !e.archived && (!filter || filter(e.id!)));
+  const have = availableEquip(data.settings);
+  const base = data.exercises.filter((e) => !e.archived && (!filter || filter(e.id!)));
+  const list = showAll ? base : base.filter((e) => canDo(e, have));
+  const hidden = base.length - list.length;
   const groups = ['gambe', 'spinta', 'tirata', 'core'] as const;
   return (
     <Sheet open={open} onClose={onClose} title="Scegli un esercizio">
@@ -109,6 +114,11 @@ export function ExercisePicker({ open, onClose, onPick, filter }: { open: boolea
           </div>
         );
       })}
+      {(hidden > 0 || showAll) && have && (
+        <Button variant="ghost" className="w-full" onClick={() => setShowAll(!showAll)}>
+          {showAll ? 'Mostra solo quelli che puoi fare' : `Mostra anche ${hidden} esercizi che richiedono altri attrezzi`}
+        </Button>
+      )}
       <Link to="/esercizi/nuovo" className="block text-center text-accent min-h-[48px] leading-[48px]">+ Crea nuovo esercizio</Link>
     </Sheet>
   );

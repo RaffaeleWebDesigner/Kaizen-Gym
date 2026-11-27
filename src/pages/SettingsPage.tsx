@@ -15,7 +15,7 @@ export default function SettingsPage() {
       <Header title="Impostazioni" back="/altro" />
       <div className="p-4 space-y-3">
         <Card className="p-0 divide-y divide-line">
-          <Link to="/attrezzatura" className="flex justify-between items-center px-4 min-h-[56px]"><span>🏋️ Attrezzatura: dischi e bilancieri</span><span className="text-muted">›</span></Link>
+          <Link to="/attrezzatura" className="flex justify-between items-center px-4 min-h-[56px]"><span>🏋️ Attrezzatura e programma</span><span className="text-muted">›</span></Link>
           <Link to="/lettera" className="flex justify-between items-center px-4 min-h-[56px]"><span>✉️ Lettera del giorno 1</span><span className="text-muted">›</span></Link>
           <Link to="/promemoria" className="flex justify-between items-center px-4 min-h-[56px]"><span>⏰ Promemoria</span><span className="text-muted">›</span></Link>
         </Card>
@@ -32,7 +32,7 @@ export default function SettingsPage() {
           </div>
         </Card>
         <Card>
-          <Field label="Lat machine: peso di ogni blocco (lb)" hint={`${fmtNum(s.lbPerBlock * LB_TO_KG)} kg. Usato quando crei un esercizio a pacco pesi in libbre.`}>
+          <Field label="Macchine in libbre: peso di ogni piastra (lb)" hint={`${fmtNum(s.lbPerBlock * LB_TO_KG)} kg. Usato quando crei un esercizio a pacco pesi in libbre.`}>
             <NumInput value={s.lbPerBlock} onChange={(v) => v && setSetting('lbPerBlock', v)} />
           </Field>
         </Card>

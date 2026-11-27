@@ -3,9 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Button, Card, toast } from '../components/ui';
 import { setSetting } from '../lib/settings';
 import {
-  ALL_EQUIP, EQUIP_LABEL, EXPERIENCE_LABEL, GOAL_LABEL, MACHINE_STEPS, PLACE_LABEL, SAFETY_QUESTIONS,
-  applyOnboarding, buildPlan, equipmentFor,
-  type Equip, type Experience, type Goal, type MachineStep, type Place,
+  ALL_EQUIP, EQUIP_LABEL, EXPERIENCE_LABEL, GOAL_LABEL, MACHINE_STEPS, PLACE_LABEL, PROGRAM_LABEL, SAFETY_QUESTIONS,
+  applyOnboarding, buildPlan, equipmentFor, suggestedProgram,
+  type Equip, type Experience, type Goal, type MachineStep, type Place, type Program,
 } from '../lib/onboarding';
 import type { Unit } from '../db';
 
@@ -43,6 +43,8 @@ export default function OnboardingPage() {
   const [machineStep, setMachineStep] = useState<MachineStep>(MACHINE_STEPS[0]);
   const [days, setDays] = useState(3);
   const [gymDays, setGymDays] = useState<number[]>([]);
+  const [program, setProgram] = useState<Program | null>(null);
+  const prog = program ?? suggestedProgram(experience, days);
   const [safety, setSafety] = useState<Record<string, boolean | undefined>>({});
   const [accepted, setAccepted] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -60,13 +62,13 @@ export default function OnboardingPage() {
 
   const flags = SAFETY_QUESTIONS.filter((q) => safety[q.key]).map((q) => q.key);
   const allAnswered = SAFETY_QUESTIONS.every((q) => safety[q.key] !== undefined);
-  const plan = goal && experience && place ? buildPlan({ goal, experience, place, equipment }) : [];
+  const plan = goal && experience && place ? buildPlan({ goal, experience, place, equipment, program: prog }) : [];
 
   const finish = async () => {
     if (!goal || !experience || !place) return;
     setSaving(true);
     try {
-      await applyOnboarding({ goal, experience, place, equipment, unit, machineStep, days, gymDays, safetyFlags: flags, acceptedAt: Date.now() });
+      await applyOnboarding({ goal, experience, place, equipment, unit, machineStep, days, program: prog, gymDays, safetyFlags: flags, acceptedAt: Date.now() });
       nav('/lettera?primo=1', { replace: true });
     } catch {
       setSaving(false);
@@ -158,6 +160,10 @@ export default function OnboardingPage() {
           <div className="grid grid-cols-3 gap-2">
             {[2, 3, 4].map((d) => <Choice key={d} selected={days === d} title={`${d} volte`} onClick={() => setDays(d)} />)}
           </div>
+          <h3 className="font-semibold pt-4">Come vuoi dividere le sedute?</h3>
+          {(Object.keys(PROGRAM_LABEL) as Program[]).map((k) => (
+            <Choice key={k} selected={prog === k} title={PROGRAM_LABEL[k].title} text={PROGRAM_LABEL[k].text} onClick={() => setProgram(k)} />
+          ))}
           <h3 className="font-semibold pt-4">In quali giorni? <span className="text-muted font-normal">(facoltativo)</span></h3>
           <div className="grid grid-cols-7 gap-1">
             {WEEKDAYS.map((w, i) => {
@@ -198,7 +204,7 @@ export default function OnboardingPage() {
       break;
     case 'riepilogo':
       body = (
-        <Q title="Ecco le tue sedute" hint={`${days} volte a settimana, alternando A, B e C. Gli esercizi si possono cambiare quando vuoi da Altro → Modelli.`}>
+        <Q title="Ecco le tue sedute" hint={`${days} volte a settimana, alternando ${PROGRAM_LABEL[prog].names.join(', ').replace(/, ([^,]*)$/, ' e $1')}. Gli esercizi si possono cambiare quando vuoi da Altro → Modelli.`}>
           {plan.filter((t) => t.code !== 'MIN').map((t) => (
             <Card key={t.code} className="p-3">
               <div className="font-bold mb-1">{t.name}</div>

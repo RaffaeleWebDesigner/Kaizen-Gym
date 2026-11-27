@@ -1,5 +1,6 @@
 import { db, type Exercise, type Template, type TemplateRow, type Unit } from '../db';
 import { setSetting, type BarInv, type PlateInv } from './settings';
+import { EXERCISE_INFO } from './catalog';
 
 // ---------- risposte del percorso di benvenuto ----------
 
@@ -8,6 +9,7 @@ export type Experience = 'principiante' | 'intermedio' | 'esperto';
 export type Place = 'palestra' | 'casa' | 'entrambi';
 export type Equip = 'manubri' | 'bilanciere' | 'rack' | 'panca' | 'sbarra' | 'parallele' | 'cavi' | 'macchine';
 export type MachineStep = { value: number; unit: Unit };
+export type Program = 'fullbody' | 'ppl';
 
 export interface Profile {
   goal: Goal;
@@ -17,6 +19,7 @@ export interface Profile {
   unit: Unit;
   machineStep: MachineStep;
   days: number;
+  program: Program;
   gymDays: number[]; // 0 = lunedì
   safetyFlags: string[];
   acceptedAt: number;
@@ -51,6 +54,14 @@ export const EQUIP_LABEL: Record<Equip, string> = {
   cavi: 'Cavi o lat machine',
   macchine: 'Macchine a pacco pesi (leg press, chest press…)',
 };
+
+export const PROGRAM_LABEL: Record<Program, { title: string; text: string; names: [string, string, string] }> = {
+  fullbody: { title: 'Tutto il corpo', text: 'Ogni seduta allena tutto: ideale con 2-3 volte a settimana', names: ['Seduta A', 'Seduta B', 'Seduta C'] },
+  ppl: { title: 'Spinta, tirata, gambe', text: 'Ogni seduta un distretto: ideale con 3-4 volte e un po’ di esperienza', names: ['Spinta', 'Tirata', 'Gambe'] },
+};
+
+/** Programma consigliato: diviso solo per chi ha esperienza e si allena almeno 4 volte. */
+export const suggestedProgram = (experience: Experience | null, days: number): Program => (experience && experience !== 'principiante' && days >= 4 ? 'ppl' : 'fullbody');
 
 export const ALL_EQUIP = Object.keys(EQUIP_LABEL) as Equip[];
 
@@ -94,6 +105,18 @@ export const EXTRA_EXERCISES: Omit<Exercise, 'id'>[] = [
     cues: ['Bacino alto, corpo a V rovesciata', 'Porta la testa verso il pavimento tra le mani'] },
   { ...exBase, name: 'Rematore inverso', group: 'tirata', bodyweight: true, increment: 0, restSec: 75,
     cues: ['Sotto un tavolo robusto o una sbarra bassa, corpo dritto', 'Tira il petto verso il bordo, scendi lento'] },
+  { ...exBase, name: 'Hip thrust con bilanciere', group: 'gambe', isBarbell: true, increment: 2.5, restSec: 120, barId: 'olimpico',
+    cues: ['Schiena appoggiata alla panca, bilanciere sul bacino', 'Spingi coi talloni e stringi i glutei in alto'] },
+  { ...exBase, name: 'Calf raise in piedi', group: 'gambe', bodyweight: true, increment: 0, restSec: 45,
+    cues: ['Su un gradino, talloni nel vuoto', 'Sali piano, pausa in alto, scendi fino in fondo'] },
+  { ...exBase, name: 'Alzate laterali con manubri', group: 'spinta', perHand: true, increment: 1, restSec: 60,
+    cues: ['Gomiti appena piegati, sali fino alle spalle', 'Carico leggero, niente slancio col busto'] },
+  { ...exBase, name: 'Piegamenti stretti', group: 'spinta', bodyweight: true, increment: 0, restSec: 60,
+    cues: ['Mani sotto le spalle, gomiti stretti al busto', 'Corpo rigido, scendi lento'] },
+  { ...exBase, name: 'Dip su una sedia', group: 'spinta', bodyweight: true, increment: 0, restSec: 60,
+    cues: ['Mani sul bordo di una sedia stabile, schiena vicina', 'Scendi fino a 90° di gomito, non oltre'] },
+  { ...exBase, name: 'Superman', group: 'tirata', bodyweight: true, increment: 0, restSec: 45,
+    cues: ['A pancia in giù, braccia avanti', 'Solleva braccia e petto, tieni un secondo, scendi piano'] },
   { ...exBase, name: 'Curl con manubri', group: 'tirata', perHand: true, increment: 1, restSec: 60,
     cues: ['Gomiti fermi ai fianchi', 'Sali e scendi lento, niente slancio'] },
 ];
@@ -133,6 +156,27 @@ const PLAN: { code: Template['code']; name: string; slots: Slot[] }[] = [
   ] },
 ];
 
+const PPL: typeof PLAN = [
+  { code: 'A', name: 'Spinta', slots: [
+    { cands: PUSH_H, main: true }, { cands: PUSH_V2, main: true },
+    { cands: [c('Croci alla macchina', ['macchine']), c('Panca inclinata con manubri', ['manubri', 'panca']), c('Piegamenti'), c('Piegamenti stretti')] },
+    { cands: [c('Alzate laterali con manubri', ['manubri'])], optional: true },
+    { cands: [c('Pushdown al cavo alto', ['cavi']), c('Dip alle parallele', ['parallele'], true), c('Dip su una sedia')], optional: true },
+  ] },
+  { code: 'B', name: 'Tirata', slots: [
+    { cands: PULL_V, main: true }, { cands: ROW, main: true },
+    { cands: [c('Face pull al cavo alto', ['cavi']), c('Rematore con manubrio', ['manubri']), c('Rematore inverso'), c('Superman')] },
+    { cands: ARMS, optional: true }, { cands: CORE_B },
+  ] },
+  { code: 'C', name: 'Gambe', slots: [
+    { cands: LEGS, main: true }, { cands: [c('Hip thrust con bilanciere', ['bilanciere', 'panca']), ...HINGE], main: true },
+    { cands: [c('Leg press', ['macchine']), ...SINGLE_LEG] },
+    { cands: [c('Leg curl a una gamba', ['macchine']), c('Ponte glutei')] },
+    { cands: [c('Calf raise in piedi')] },
+  ] },
+  PLAN[3],
+];
+
 export interface PlanRow { name: string; sets: number; repMin: number; repMax: number }
 export interface PlanTemplate { code: Template['code']; name: string; rows: PlanRow[] }
 
@@ -140,15 +184,16 @@ const TIME_EX = new Set(['Plank', 'Plank laterale']);
 const BW_RANGE: Record<string, [number, number]> = {
   'Trazioni alla sbarra': [3, 8], 'Dip alle parallele': [5, 10], 'Piegamenti': [6, 15], 'Rematore inverso': [6, 12],
   'Pike push-up': [5, 10], 'Knee raise alla sbarra': [8, 12], 'Dead bug': [8, 12], 'Squat a corpo libero': [12, 20],
-  'Affondi a corpo libero': [8, 12], 'Ponte glutei': [12, 20],
+  'Affondi a corpo libero': [8, 12], 'Ponte glutei': [12, 20], 'Calf raise in piedi': [12, 20],
+  'Piegamenti stretti': [5, 12], 'Dip su una sedia': [8, 15], 'Superman': [10, 15],
 };
 const GOAL_RANGE: Record<Goal, [number, number]> = { forza: [5, 8], massa: [8, 12], dimagrire: [10, 15], salute: [10, 15] };
 
 /** Sceglie gli esercizi e le fasce di ripetizioni dalle risposte. Funzione pura. */
-export function buildPlan(p: Pick<Profile, 'goal' | 'experience' | 'place' | 'equipment'>): PlanTemplate[] {
+export function buildPlan(p: Pick<Profile, 'goal' | 'experience' | 'place' | 'equipment'> & { program?: Program }): PlanTemplate[] {
   const have = new Set(equipmentFor(p));
   const beginner = p.experience === 'principiante';
-  return PLAN.map((t) => {
+  return (p.program === 'ppl' ? PPL : PLAN).map((t) => {
     const used = new Set<string>();
     const rows: PlanRow[] = [];
     for (const slot of t.slots) {
@@ -184,14 +229,51 @@ export function defaultInventory(p: Pick<Profile, 'place' | 'equipment' | 'unit'
 
 // ---------- applicazione al database ----------
 
+/** Aggiunge gli esercizi mancanti e scrive attrezzi e schema di movimento su quelli del catalogo. */
+async function ensureCatalog(): Promise<Exercise[]> {
+  let all = await db.exercises.toArray();
+  for (const e of EXTRA_EXERCISES) if (!all.some((x) => x.name === e.name)) await db.exercises.add(e);
+  all = await db.exercises.toArray();
+  for (const e of all) {
+    const info = EXERCISE_INFO[e.name];
+    if (info && !e.pattern) {
+      await db.exercises.update(e.id!, { needs: info.needs, pattern: info.pattern });
+      Object.assign(e, { needs: info.needs, pattern: info.pattern });
+    }
+  }
+  return all;
+}
+
+/** Riscrive le sedute A/B/C/minima dal profilo. Le sedute già fatte non cambiano. */
+export async function writeTemplates(p: Profile, all?: Exercise[]): Promise<void> {
+  const list = all ?? (await ensureCatalog());
+  const byName = new Map(list.filter((e) => !e.archived).map((e) => [e.name, e]));
+  for (const t of buildPlan(p)) {
+    const rows: TemplateRow[] = t.rows.flatMap((r) => {
+      const ex = byName.get(r.name);
+      return ex ? [{ exerciseId: ex.id!, sets: r.sets, repMin: r.repMin, repMax: r.repMax, startLoad: 0, restSec: ex.restSec }] : [];
+    });
+    const existing = await db.templates.where('code').equals(t.code).first();
+    if (existing) await db.templates.update(existing.id!, { name: t.name, rows });
+    else await db.templates.add({ code: t.code, name: t.name, rows });
+  }
+}
+
+/** Dopo un cambio di attrezzatura o di programma: salva il profilo e, se richiesto, rifà le sedute. */
+export async function updateProfile(p: Profile, rebuild: boolean): Promise<void> {
+  await db.transaction('rw', [db.settings, db.exercises, db.templates], async () => {
+    const all = await ensureCatalog();
+    await setSetting('profile', p);
+    await setSetting('weeklyGoal', p.days);
+    if (rebuild) await writeTemplates(p, all);
+  });
+}
+
 /** Salva il profilo, aggiunge gli esercizi mancanti e riscrive le sedute A/B/C/minima. */
 export async function applyOnboarding(p: Profile): Promise<void> {
-  const plan = buildPlan(p);
   const inv = defaultInventory(p);
   await db.transaction('rw', [db.settings, db.exercises, db.templates], async () => {
-    let all = await db.exercises.toArray();
-    for (const e of EXTRA_EXERCISES) if (!all.some((x) => x.name === e.name)) await db.exercises.add(e);
-    all = await db.exercises.toArray();
+    const all = await ensureCatalog();
 
     // unità e pacchi pesi
     for (const e of all) {
@@ -202,19 +284,12 @@ export async function applyOnboarding(p: Profile): Promise<void> {
         else Object.assign(patch, { unit: 'kg', increment: e.isBarbell ? 2.5 : 1 });
       }
       if (e.isBarbell && e.barId && e.barId !== 'ez') patch.barId = inv.bars.some((b) => b.id === 'olimpico') ? 'olimpico' : null;
-      if (Object.keys(patch).length) await db.exercises.update(e.id!, patch);
+      if (Object.keys(patch).length) {
+        await db.exercises.update(e.id!, patch);
+        Object.assign(e, patch);
+      }
     }
-
-    const byName = new Map(all.map((e) => [e.name, e]));
-    for (const t of plan) {
-      const rows: TemplateRow[] = t.rows.map((r) => {
-        const ex = byName.get(r.name)!;
-        return { exerciseId: ex.id!, sets: r.sets, repMin: r.repMin, repMax: r.repMax, startLoad: 0, restSec: ex.restSec };
-      });
-      const existing = await db.templates.where('code').equals(t.code).first();
-      if (existing) await db.templates.update(existing.id!, { name: t.name, rows });
-      else await db.templates.add({ code: t.code, name: t.name, rows });
-    }
+    await writeTemplates(p, all);
 
     await setSetting('plates', inv.plates);
     await setSetting('bars', inv.bars);

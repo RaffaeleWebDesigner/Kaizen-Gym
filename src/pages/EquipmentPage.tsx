@@ -4,6 +4,7 @@ import { db } from '../db';
 import { setSetting, useSettings, type BarInv, type PlateInv } from '../lib/settings';
 import { fmtNum } from '../lib/units';
 import { plateTotals } from '../lib/plates';
+import ProfileCard from '../components/ProfileCard';
 
 /** Aggiorna il peso del bilanciere negli esercizi collegati e nelle sedute in corso. */
 export async function propagateBars(bars: BarInv[]) {
@@ -49,6 +50,7 @@ export default function EquipmentPage() {
     <div className="pb-nav">
       <Header title="Attrezzatura" back="/impostazioni" />
       <div className="p-4 space-y-3">
+        <ProfileCard />
         <Card>
           <h2 className="font-bold mb-1">Dischi</h2>
           <p className="text-sm text-muted mb-3">Peso e quantità totale. Se la quantità è vuota, considero che ne hai quanti ne servono.</p>
@@ -86,7 +88,7 @@ export default function EquipmentPage() {
           ))}
           <Button className="w-full mt-2" onClick={() => setBars([...bars, { id: `bar${Date.now()}`, name: 'Nuovo bilanciere', kind: 'dritto', weight: null }])}>+ Aggiungi bilanciere</Button>
         </Card>
-        <Button big variant="primary" className="w-full" onClick={save}>Salva</Button>
+        <Button big variant="primary" className="w-full" onClick={save}>Salva dischi e bilancieri</Button>
       </div>
     </div>
   );
